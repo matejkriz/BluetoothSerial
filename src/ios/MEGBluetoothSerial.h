@@ -11,9 +11,11 @@
 
 #import <Cordova/CDV.h>
 #import "BLE.h"
+#import "BluetoothClassic.h"
 
 @interface MEGBluetoothSerial : CDVPlugin <BLEDelegate> {
     BLE *_bleShield;
+    BluetoothClassic *_cShield;
     NSString* _connectCallbackId;
     NSString* _subscribeCallbackId;
     NSString* _subscribeBytesCallbackId;
@@ -32,6 +34,7 @@
 - (void)write:(CDVInvokedUrlCommand *)command;
 
 - (void)list:(CDVInvokedUrlCommand *)command;
+- (void)listClassical:(CDVInvokedUrlCommand *)command;
 - (void)isEnabled:(CDVInvokedUrlCommand *)command;
 - (void)isConnected:(CDVInvokedUrlCommand *)command;
 

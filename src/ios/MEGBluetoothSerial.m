@@ -24,7 +24,7 @@
 
 - (void)pluginInitialize {
 
-    NSLog(@"Bluetooth Serial Cordova Plugin - BLE version");
+    NSLog(@"Bluetooth Serial Cordova Plugin - BLE & Classic bluetooth version");
     NSLog(@"(c)2013-2014 Don Coleman");
 
     [super pluginInitialize];
@@ -32,6 +32,8 @@
     _bleShield = [[BLE alloc] init];
     [_bleShield controlSetup];
     [_bleShield setDelegate:self];
+
+    _cShield = [[BLE alloc] init];
 
     _buffer = [[NSMutableString alloc] init];
 }
@@ -161,6 +163,24 @@
                                     repeats:NO];
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)listClassical:(CDVInvokedUrlCommand*)command {
+
+  CDVPluginResult *pluginResult = nil;
+
+  pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+  [pluginResult setKeepCallbackAsBool:TRUE];
+
+  [self scanForClassicalPeripherals:3];
+
+  [NSTimer scheduledTimerWithTimeInterval:(float)3.0
+  target:self
+  selector:@selector(listPeripheralsTimer:)
+  userInfo:[command.callbackId copy]
+  repeats:NO];
+
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void)isEnabled:(CDVInvokedUrlCommand*)command {
@@ -412,6 +432,33 @@
         [peripherals addObject:peripheral];
     }
 
+    for (int i = 0; i < _cShield.peripherals.count; i++) {
+      NSMutableDictionary *peripheral = [NSMutableDictionary dictionary];
+      CBPeripheral *p = [_cShield.peripherals objectAtIndex:i];
+
+      if (p.UUID != NULL) {
+        // Seriously WTF?
+        CFStringRef s = CFUUIDCreateString(NULL, p.UUID);
+        NSString *uuid = [NSString stringWithCString:CFStringGetCStringPtr(s, 0)
+        encoding:(NSStringEncoding)NSUTF8StringEncoding];
+        [peripheral setObject: uuid forKey: @"uuid"];
+        [peripheral setObject: uuid forKey: @"id"];
+      }
+      else {
+        [peripheral setObject: @"" forKey: @"uuid"];
+      }
+
+      NSString *name = [p name];
+      if (!name) {
+        name = [peripheral objectForKey:@"uuid"];
+      }
+      [peripheral setObject: name forKey: @"name"];
+
+      [peripherals addObject:peripheral];
+    }
+
+
+
     return peripherals;
 }
 
@@ -452,6 +499,17 @@
     }
 
     [_bleShield findBLEPeripherals:timeout];
+}
+
+- (void)scanForClassicalPeripherals:(int)timeout {
+
+  NSLog(@"Scanning for Classic Bluetooth peripherals");
+
+  // disconnect
+
+  // remove existing peripherals
+
+  [_cShield findBLEPeripherals:timeout];
 }
 
 - (void)connectToFirstDevice {

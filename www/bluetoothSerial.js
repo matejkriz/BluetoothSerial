@@ -19,6 +19,11 @@ module.exports = {
         cordova.exec(success, failure, "BluetoothSerial", "list", []);
     },
 
+    // list bound devices with classic bluetooth
+    listClassical: function (success, failure) {
+      cordova.exec(success, failure, "BluetoothSerial", "listClassical", []);
+    },
+
     isEnabled: function (success, failure) {
         cordova.exec(success, failure, "BluetoothSerial", "isEnabled", []);
     },

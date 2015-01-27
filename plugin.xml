@@ -62,8 +62,13 @@
         <header-file src="src/ios/BLEDefines.h" target-dir="BluetoothSerial" />
         <source-file src="src/ios/BLE.m" target-dir="BluetoothSerial" />
 
+        <!-- Classical bluetooth -->
+        <header-file src="src/ios/BluetoothClassic.h" target-dir="BluetoothSerial" />
+        <source-file src="src/ios/BluetoothClassic.m" target-dir="BluetoothSerial" />
+
         <!-- frameworks -->
         <framework src="CoreBluetooth.framework" />
+        <framework src="ExternalAccessory.framework" weak="true" />
 
     </platform>
 </plugin>
