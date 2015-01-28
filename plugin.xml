@@ -2,15 +2,15 @@
 <plugin
     xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    id="com.megster.cordova.bluetoothserial"
-    version="0.3.4">
+    id="com.improvisio.bluetoothserial"
+    version="0.0.1">
 
     <name>Bluetooth Serial</name>
-    <description>Bluetooth Serial Communication Plugin</description>
+    <description>Bluetooth Serial Communication Plugin based on plugin from Don Coleman,
+       but using ExternalAccessory framework on ios for communication with bluetooth classic.</description>
     <license>Apache 2.0</license>
-    <keywords>bluetooth, BLE, arduino</keywords>
-    <repo>https://github.com/don/BluetoothSerial.git</repo>
-    <issue>https://github.com/don/BluetoothSerial/issues</issue>
+    <keywords>bluetooth</keywords>
+    <repo>https://github.com/matejkriz/BluetoothSerial</repo>
 
     <engines>
         <engine name="cordova" version=">=2.9.0" />
@@ -48,26 +48,15 @@
 
         <config-file target="config.xml" parent="/widget">
             <feature name="BluetoothSerial">
-                <param name="ios-package" value="MEGBluetoothSerial" onload="true"/>
+                <param name="ios-package" value="BluetoothSerial" onload="true"/>
             </feature>
         </config-file>
 
-        <header-file src="src/ios/MEGBluetoothSerial.h" target-dir="BluetoothSerial" />
-        <source-file src="src/ios/MEGBluetoothSerial.m" target-dir="BluetoothSerial" />
-        <header-file src="src/ios/CBPeripheral+Extensions.h" target-dir="BluetoothSerial" />
-        <source-file src="src/ios/CBPeripheral+Extensions.m" target-dir="BluetoothSerial" />
-
-        <!-- BLEMini see http://redbearlab.com -->
-        <header-file src="src/ios/BLE.h" target-dir="BluetoothSerial" />
-        <header-file src="src/ios/BLEDefines.h" target-dir="BluetoothSerial" />
-        <source-file src="src/ios/BLE.m" target-dir="BluetoothSerial" />
-
         <!-- Classical bluetooth -->
-        <header-file src="src/ios/BluetoothClassic.h" target-dir="BluetoothSerial" />
-        <source-file src="src/ios/BluetoothClassic.m" target-dir="BluetoothSerial" />
+        <header-file src="src/ios/BluetoothSerial.h" target-dir="BluetoothSerial" />
+        <source-file src="src/ios/BluetoothSerial.m" target-dir="BluetoothSerial" />
 
         <!-- frameworks -->
-        <framework src="CoreBluetooth.framework" />
         <framework src="ExternalAccessory.framework" weak="true" />
 
     </platform>
