@@ -3,7 +3,7 @@
     xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.improvisio.bluetoothserial"
-    version="0.0.2">
+    version="0.0.4">
 
     <name>Bluetooth Serial</name>
     <description>Bluetooth Serial Communication Plugin based on plugin from Don Coleman,
@@ -55,6 +55,8 @@
         <!-- Classical bluetooth -->
         <header-file src="src/ios/BluetoothSerial.h" target-dir="BluetoothSerial" />
         <source-file src="src/ios/BluetoothSerial.m" target-dir="BluetoothSerial" />
+        <header-file src="src/ios/EADSessionController.h" target-dir="BluetoothSerial" />
+        <source-file src="src/ios/EADSessionController.m" target-dir="BluetoothSerial" />
 
         <!-- frameworks -->
         <framework src="ExternalAccessory.framework" weak="true" />
