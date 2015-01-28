@@ -3,7 +3,7 @@
     xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.improvisio.bluetoothserial"
-    version="0.0.1">
+    version="0.0.2">
 
     <name>Bluetooth Serial</name>
     <description>Bluetooth Serial Communication Plugin based on plugin from Don Coleman,
