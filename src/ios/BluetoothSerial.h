@@ -9,8 +9,15 @@
 #import <UIKit/UIKit.h>
 #import <Cordova/CDV.h>
 
+#import "EADSessionController.h"
+
 @interface BluetoothSerial : CDVPlugin
+{
+  NSMutableArray *_accessoryList;
+  EADSessionController *_eaSessionController;
+}
 
  - (void)list:(CDVInvokedUrlCommand*)command;
+ //- (void)_sessionDataReceived:(NSNotification *)notification;
 
 @end

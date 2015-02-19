@@ -54,6 +54,7 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
 @implementation EADSessionController
 
 @synthesize accessory = _accessory;
+@synthesize buffer = _buffer;
 @synthesize protocolString = _protocolString;
 
 #pragma mark Internal
@@ -118,27 +119,55 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
 }
 
 // open a session with the accessory and set up the input and output stream on the default run loop
-- (BOOL)openSession
-{
-    [_accessory setDelegate:self];
-    _session = [[EASession alloc] initWithAccessory:_accessory forProtocol:_protocolString];
+- (BOOL)openSession{
 
-    if (_session)
-    {
-        [[_session inputStream] setDelegate:self];
-        [[_session inputStream] scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-        [[_session inputStream] open];
+    _buffer = [[NSString alloc] init];
 
-        [[_session outputStream] setDelegate:self];
-        [[_session outputStream] scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-        [[_session outputStream] open];
-    }
-    else
-    {
-        NSLog(@"creating session failed");
+    if(_session){
+        [self closeSession];
     }
 
-    return (_session != nil);
+    //input your own protocol string
+    [self openSessionForProtocol:@"com.RovingNetworks.btdemo"];
+
+    if(!_session){
+        return NO;
+    }else{
+        //BT Connected start session
+        return YES;
+
+    }
+}
+
+- (EASession *)openSessionForProtocol:(NSString *)protocolString{
+
+    NSArray *accessories = [[EAAccessoryManager sharedAccessoryManager]
+                            connectedAccessories];
+    EAAccessory *accessory = nil;
+    for (EAAccessory *obj in accessories) {
+        if ([[obj protocolStrings] containsObject:protocolString]){
+            accessory = obj;
+            break;
+        }
+    }
+
+    if (accessory){
+        _session = [[EASession alloc] initWithAccessory:accessory
+                                            forProtocol:protocolString];
+        if (_session) {
+            [[_session inputStream] setDelegate:self];
+            [[_session inputStream] scheduleInRunLoop:[NSRunLoop currentRunLoop]
+                                              forMode:NSDefaultRunLoopMode];
+            [[_session inputStream] open];
+
+            [[_session outputStream] setDelegate:self];
+            [[_session outputStream] scheduleInRunLoop:[NSRunLoop currentRunLoop]
+                                               forMode:NSDefaultRunLoopMode];
+            [[_session outputStream] open];
+        }
+    }
+
+    return _session;
 }
 
 // close the session with the accessory.
