@@ -13,11 +13,23 @@
 
 @interface BluetoothSerial : CDVPlugin
 {
-  NSMutableArray *_accessoryList;
-  EADSessionController *_eaSessionController;
+    NSMutableArray *_accessoryList;
+    EADSessionController *_eaSessionController;
+    NSString *_subscribeCallbackId;
+    NSString *_delimiter;
 }
 
+ - (void)connect:(CDVInvokedUrlCommand*)command;
+ - (void)disconnect:(CDVInvokedUrlCommand*)command;
  - (void)list:(CDVInvokedUrlCommand*)command;
- //- (void)_sessionDataReceived:(NSNotification *)notification;
+ - (void)isEnabled:(CDVInvokedUrlCommand*)command;
+ - (void)isConnected:(CDVInvokedUrlCommand*)command;
+ - (void)available:(CDVInvokedUrlCommand*)command;
+ - (void)read:(CDVInvokedUrlCommand*)command;
+ - (void)readUntil:(CDVInvokedUrlCommand*)command;
+ - (void)write:(CDVInvokedUrlCommand*)command;
+ - (void)subscribe:(CDVInvokedUrlCommand*)command;
+ - (void)unsubscribe:(CDVInvokedUrlCommand*)command;
+ - (void)clear:(CDVInvokedUrlCommand*)command;
 
 @end

@@ -58,6 +58,7 @@ extern NSString *EADSessionDataReceivedNotification;
     EASession *_session;
     NSString *_protocolString;
     NSString *_buffer;
+    uint8_t _delimiter;
 
     NSMutableData *_writeData;
     NSMutableData *_readData;
@@ -67,16 +68,20 @@ extern NSString *EADSessionDataReceivedNotification;
 
 - (void)setupControllerForAccessory:(EAAccessory *)accessory withProtocolString:(NSString *)protocolString;
 
-- (BOOL)openSession;
+- (BOOL)openSession:(EAAccessory *)accessory;
 - (void)closeSession;
 
 - (void)writeData:(NSData *)data;
 
 - (NSUInteger)readBytesAvailable;
 - (NSData *)readData:(NSUInteger)bytesToRead;
+- (void)setDelimiter:(NSString*)delimiter;
+- (void)clearData;
 
 @property (nonatomic, readonly) EAAccessory *accessory;
+@property (nonatomic, readonly) EASession *session;
 @property (nonatomic, readonly) NSString *protocolString;
 @property (nonatomic, strong) NSString *buffer;
+@property (nonatomic, strong) NSMutableData *readData;
 
 @end

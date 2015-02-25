@@ -54,8 +54,10 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
 @implementation EADSessionController
 
 @synthesize accessory = _accessory;
+@synthesize session = _session;
 @synthesize buffer = _buffer;
 @synthesize protocolString = _protocolString;
+@synthesize readData = _readData;
 
 #pragma mark Internal
 
@@ -76,21 +78,30 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
     }
 }
 
+- (void)setDelimiter:(NSString*)delimiter
+{
+    _delimiter = *[delimiter UTF8String];
+}
+
 // low level read method - read data while there is data and space available in the input buffer
 - (void)_readData {
 #define EAD_INPUT_BUFFER_SIZE 128
     uint8_t buf[EAD_INPUT_BUFFER_SIZE];
+    NSInteger bytesAvailable = 0;
     while ([[_session inputStream] hasBytesAvailable])
     {
         NSInteger bytesRead = [[_session inputStream] read:buf maxLength:EAD_INPUT_BUFFER_SIZE];
         if (_readData == nil) {
             _readData = [[NSMutableData alloc] init];
         }
-        [_readData appendBytes:(void *)buf length:bytesRead];
-        //NSLog(@"read %d bytes from input stream", bytesRead);
+        [_readData appendBytes:(unsigned char *)buf length:bytesRead];
+        bytesAvailable += bytesRead;
     }
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:EADSessionDataReceivedNotification object:self userInfo:nil];
+    uint8_t delimiter = _delimiter | '\n';
+    if(buf[bytesAvailable - 1] == delimiter){
+        [[NSNotificationCenter defaultCenter] postNotificationName:EADSessionDataReceivedNotification object:self userInfo:nil];
+    }
 }
 
 #pragma mark Public Methods
@@ -119,7 +130,8 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
 }
 
 // open a session with the accessory and set up the input and output stream on the default run loop
-- (BOOL)openSession{
+- (BOOL)openSession:(EAAccessory *)accessory{
+    _protocolString = @"com.RovingNetworks.btdemo";
 
     _buffer = [[NSString alloc] init];
 
@@ -127,8 +139,19 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
         [self closeSession];
     }
 
-    //input your own protocol string
-    [self openSessionForProtocol:@"com.RovingNetworks.btdemo"];
+    bool hasRightProtocol = false;
+    for(NSString *protocol in accessory.protocolStrings){
+        if([protocol isEqualToString:_protocolString]){
+            hasRightProtocol = true;
+            break;
+        }
+    }
+
+    if(hasRightProtocol) {
+        [self openSessionForAccessory:accessory];
+    } else {
+        NSLog(@"Device could not use correct protocol!");
+    }
 
     if(!_session){
         return NO;
@@ -139,21 +162,10 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
     }
 }
 
-- (EASession *)openSessionForProtocol:(NSString *)protocolString{
-
-    NSArray *accessories = [[EAAccessoryManager sharedAccessoryManager]
-                            connectedAccessories];
-    EAAccessory *accessory = nil;
-    for (EAAccessory *obj in accessories) {
-        if ([[obj protocolStrings] containsObject:protocolString]){
-            accessory = obj;
-            break;
-        }
-    }
-
+- (EASession *)openSessionForAccessory:(EAAccessory *)accessory{
     if (accessory){
         _session = [[EASession alloc] initWithAccessory:accessory
-                                            forProtocol:protocolString];
+                                            forProtocol:_protocolString];
         if (_session) {
             [[_session inputStream] setDelegate:self];
             [[_session inputStream] scheduleInRunLoop:[NSRunLoop currentRunLoop]
@@ -207,6 +219,12 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
         [_readData replaceBytesInRange:range withBytes:NULL length:0];
     }
     return data;
+}
+
+- (void)clearData
+{
+    NSRange range = NSMakeRange(0, [_readData length]);
+    [_readData replaceBytesInRange:range withBytes:NULL length:0];
 }
 
 // get number of bytes read into local buffer
