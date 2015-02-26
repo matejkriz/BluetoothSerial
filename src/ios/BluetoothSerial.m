@@ -43,7 +43,9 @@
     if(result){
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:deviceDictionary];
     } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device could not connect!"];
+        [deviceDictionary setObject:@"Could not connect!!!" forKey:@"error"];
+        [deviceDictionary setObject:[NSString stringWithFormat:@"%@",  deviceID] forKey:@"deviceID"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:deviceDictionary];
     }
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -69,17 +71,16 @@
     _accessoryList = [[NSMutableArray alloc] initWithArray:[[EAAccessoryManager sharedAccessoryManager] connectedAccessories]];
     NSLog(@"_accessoryList %@", _accessoryList);
 
-    NSMutableDictionary *accessoryDictionary = [[NSMutableDictionary alloc] init];
-    unsigned int indexKey = 0;
+    NSMutableArray *accessoryDictionary = [[NSMutableArray alloc] init];
     for (EAAccessory *device in _accessoryList) {
         NSMutableDictionary *tmpDic=[[NSMutableDictionary alloc] init];
         [tmpDic setObject:device.name forKey:@"name"];
         [tmpDic setObject:[NSString stringWithFormat:@"%@",  @(device.connectionID)] forKey:@"id"];
 
-        accessoryDictionary[[NSString stringWithFormat:@"%u",  indexKey++]] = tmpDic;
+        [accessoryDictionary addObject:tmpDic];
     }
 
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:accessoryDictionary];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:accessoryDictionary];
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }

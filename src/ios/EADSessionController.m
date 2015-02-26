@@ -139,19 +139,19 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
         [self closeSession];
     }
 
-    bool hasRightProtocol = false;
-    for(NSString *protocol in accessory.protocolStrings){
-        if([protocol isEqualToString:_protocolString]){
-            hasRightProtocol = true;
-            break;
-        }
-    }
+   bool hasRightProtocol = false;
+   for(NSString *protocol in accessory.protocolStrings){
+       if([protocol isEqualToString:_protocolString]){
+           hasRightProtocol = true;
+           break;
+       }
+   }
 
-    if(hasRightProtocol) {
-        [self openSessionForAccessory:accessory];
-    } else {
-        NSLog(@"Device could not use correct protocol!");
-    }
+   if(hasRightProtocol) {
+       [self openSessionForAccessory:accessory];
+   } else {
+       NSLog(@"Device could not use correct protocol!");
+   }
 
     if(!_session){
         return NO;
