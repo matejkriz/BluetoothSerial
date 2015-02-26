@@ -3,7 +3,7 @@
     xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.improvisio.bluetoothserial"
-    version="1.0.0">
+    version="1.0.5">
 
     <name>Bluetooth Serial</name>
     <description>Bluetooth Serial Communication Plugin based on plugin from Don Coleman,
@@ -60,6 +60,12 @@
 
         <!-- frameworks -->
         <framework src="ExternalAccessory.framework" weak="true" />
+
+        <config-file target="*-Info.plist" parent="UISupportedExternalAccessoryProtocols">
+          <array>
+            <string>com.RovingNetworks.btdemo</string>
+          </array>
+        </config-file>
 
     </platform>
 </plugin>
