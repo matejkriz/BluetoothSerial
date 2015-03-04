@@ -11,6 +11,7 @@
 
 @implementation BluetoothSerial
 
+
 - (void)connect:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
@@ -43,9 +44,7 @@
     if(result){
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:deviceDictionary];
     } else {
-        [deviceDictionary setObject:@"Could not connect!!!" forKey:@"error"];
-        [deviceDictionary setObject:[NSString stringWithFormat:@"%@",  deviceID] forKey:@"deviceID"];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:deviceDictionary];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Device could not connect!"];
     }
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -54,6 +53,7 @@
 {
     CDVPluginResult* pluginResult = nil;
 
+    [self removeSubscription];
     [_eaSessionController closeSession];
 
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Device disconnected!"];
@@ -68,6 +68,7 @@
     if (!_eaSessionController){
         _eaSessionController = [EADSessionController sharedController];
     }
+
     _accessoryList = [[NSMutableArray alloc] initWithArray:[[EAAccessoryManager sharedAccessoryManager] connectedAccessories]];
     NSLog(@"_accessoryList %@", _accessoryList);
 
@@ -81,6 +82,16 @@
     }
 
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:accessoryDictionary];
+
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)pair:(CDVInvokedUrlCommand*)command
+{
+    CDVPluginResult* pluginResult = nil;
+
+    [[EAAccessoryManager sharedAccessoryManager] showBluetoothAccessoryPickerWithNameFilter:nil completion:nil];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:TRUE];
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -171,11 +182,12 @@
 
     _subscribeCallbackId = [command.callbackId copy];
     _delimiter = [delimiter copy];
+
     [_eaSessionController setDelimiter:delimiter];
 
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
-
-    [[NSNotificationCenter defaultCenter] addObserverForName:@"EADSessionDataReceivedNotification" object:nil
+    _dataReceivedObserver = [center addObserverForName:@"EADSessionDataReceivedNotification" object:nil
                                                      queue:mainQueue usingBlock:^(NSNotification *note) {
                                                          [self sendDataToSubscriber];
                                                      }];
@@ -221,11 +233,18 @@
 
 }
 
+- (void) removeSubscription {
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:_dataReceivedObserver];
+}
+
 - (void)unsubscribe:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
 
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Unsubscribe not implemented yet!"];
+    [self removeSubscription];
+
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Unsubscribed!"];
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }

@@ -66,7 +66,7 @@ extern NSString *EADSessionDataReceivedNotification;
 
 + (EADSessionController *)sharedController;
 
-- (void)setupControllerForAccessory:(EAAccessory *)accessory withProtocolString:(NSString *)protocolString;
+//- (void)setupControllerForAccessory:(EAAccessory *)accessory withProtocolString:(NSString *)protocolString;
 
 - (BOOL)openSession:(EAAccessory *)accessory;
 - (void)closeSession;

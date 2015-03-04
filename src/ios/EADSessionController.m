@@ -116,18 +116,18 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
     return sessionController;
 }
 
-- (void)dealloc
-{
-    [self closeSession];
-    [self setupControllerForAccessory:nil withProtocolString:nil];
-}
-
-// initialize the accessory with the protocolString
-- (void)setupControllerForAccessory:(EAAccessory *)accessory withProtocolString:(NSString *)protocolString
-{
-    _accessory = accessory;
-    _protocolString = [protocolString copy];
-}
+//- (void)dealloc
+//{
+//    [self closeSession];
+//    [self setupControllerForAccessory:nil withProtocolString:nil];
+//}
+//
+//// initialize the accessory with the protocolString
+//- (void)setupControllerForAccessory:(EAAccessory *)accessory withProtocolString:(NSString *)protocolString
+//{
+//    _accessory = accessory;
+//    _protocolString = [protocolString copy];
+//}
 
 // open a session with the accessory and set up the input and output stream on the default run loop
 - (BOOL)openSession:(EAAccessory *)accessory{
@@ -138,20 +138,17 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
     if(_session){
         [self closeSession];
     }
+    _session = nil;
 
-   bool hasRightProtocol = false;
-   for(NSString *protocol in accessory.protocolStrings){
-       if([protocol isEqualToString:_protocolString]){
-           hasRightProtocol = true;
-           break;
-       }
-   }
+    bool hasRightProtocol = [[accessory protocolStrings]
+                             containsObject:_protocolString];
 
-   if(hasRightProtocol) {
-       [self openSessionForAccessory:accessory];
-   } else {
-       NSLog(@"Device could not use correct protocol!");
-   }
+
+    if(hasRightProtocol) {
+        [self openSessionForAccessory:accessory];
+    } else {
+        NSLog(@"Device could not use correct protocol!");
+    }
 
     if(!_session){
         return NO;
@@ -177,6 +174,10 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
                                                forMode:NSDefaultRunLoopMode];
             [[_session outputStream] open];
         }
+        else
+        {
+            NSLog(@"creating session failed");
+        }
     }
 
     return _session;
@@ -193,6 +194,9 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
     [[_session outputStream] setDelegate:nil];
 
     _session = nil;
+
+    [_accessory setDelegate:nil];
+    _accessory = nil;
 
     _writeData = nil;
     _readData = nil;
@@ -233,12 +237,13 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
     return [_readData length];
 }
 
-#pragma mark EAAccessoryDelegate
-- (void)accessoryDidDisconnect:(EAAccessory *)accessory
-{
-    // do something ...
-}
-
+//#pragma mark EAAccessoryDelegate
+//- (void)accessoryDidDisconnect:(EAAccessory *)accessory
+//{
+//    NSLog(@"accessoryDidDisconnect");
+//    // do something ...
+//}
+//
 #pragma mark NSStreamDelegateEventExtensions
 
 // asynchronous NSStream handleEvent method
@@ -246,20 +251,27 @@ NSString *EADSessionDataReceivedNotification = @"EADSessionDataReceivedNotificat
 {
     switch (eventCode) {
         case NSStreamEventNone:
+            NSLog(@"NSStreamEventNone");
             break;
         case NSStreamEventOpenCompleted:
+            NSLog(@"NSStreamEventOpenCompleted");
             break;
         case NSStreamEventHasBytesAvailable:
+            NSLog(@"NSStreamEventHasBytesAvailable");
             [self _readData];
             break;
         case NSStreamEventHasSpaceAvailable:
-            [self _writeData];
+            NSLog(@"NSStreamEventHasSpaceAvailable");
+//            [self _writeData];
             break;
         case NSStreamEventErrorOccurred:
+            NSLog(@"NSStreamEventErrorOccurred");
             break;
         case NSStreamEventEndEncountered:
+            NSLog(@"NSStreamEventEndEncountered");
             break;
         default:
+            NSLog(@"unrecognized event %u", eventCode);
             break;
     }
 }

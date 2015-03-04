@@ -17,11 +17,13 @@
     EADSessionController *_eaSessionController;
     NSString *_subscribeCallbackId;
     NSString *_delimiter;
+    NSObject *_dataReceivedObserver;
 }
 
  - (void)connect:(CDVInvokedUrlCommand*)command;
  - (void)disconnect:(CDVInvokedUrlCommand*)command;
  - (void)list:(CDVInvokedUrlCommand*)command;
+ - (void)pair:(CDVInvokedUrlCommand*)command;
  - (void)isEnabled:(CDVInvokedUrlCommand*)command;
  - (void)isConnected:(CDVInvokedUrlCommand*)command;
  - (void)available:(CDVInvokedUrlCommand*)command;
