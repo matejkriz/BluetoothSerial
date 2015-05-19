@@ -22,8 +22,8 @@ module.exports = {
 	},
 
 	// list bound devices
-	pair: function(success, failure) {
-		cordova.exec(success, failure, "BluetoothSerial", "pair", []);
+	connectIOS: function(success, failure) {
+		cordova.exec(success, failure, "BluetoothSerial", "connectIOS", []);
 	},
 
 	// list bound devices with classic bluetooth
