@@ -61,10 +61,8 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)list:(CDVInvokedUrlCommand*)command
+-(NSMutableArray*)getList
 {
-    CDVPluginResult* pluginResult = nil;
-
     if (!_eaSessionController){
         _eaSessionController = [EADSessionController sharedController];
     }
@@ -74,26 +72,39 @@
 
     NSMutableArray *accessoryDictionary = [[NSMutableArray alloc] init];
     for (EAAccessory *device in _accessoryList) {
-        NSMutableDictionary *tmpDic=[[NSMutableDictionary alloc] init];
-        [tmpDic setObject:device.name forKey:@"name"];
-        [tmpDic setObject:[NSString stringWithFormat:@"%@",  @(device.connectionID)] forKey:@"id"];
+        if ([device.protocolStrings indexOfObject:@"com.RovingNetworks.btdemo"] != NSNotFound) {
+            NSMutableDictionary *tmpDic=[[NSMutableDictionary alloc] init];
+            [tmpDic setObject:device.name forKey:@"name"];
+            [tmpDic setObject:[NSString stringWithFormat:@"%@",  @(device.connectionID)] forKey:@"id"];
 
-        [accessoryDictionary addObject:tmpDic];
+            [accessoryDictionary addObject:tmpDic];
+        }
     }
+    return accessoryDictionary;
+}
 
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:accessoryDictionary];
+- (void)list:(CDVInvokedUrlCommand*)command
+{
+    CDVPluginResult* pluginResult = nil;
+
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:[self getList]];
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)pair:(CDVInvokedUrlCommand*)command
+
+- (void)connectIOS:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = nil;
+    if (!_eaSessionController){
+        _eaSessionController = [EADSessionController sharedController];
+    }
 
-    [[EAAccessoryManager sharedAccessoryManager] showBluetoothAccessoryPickerWithNameFilter:nil completion:nil];
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:TRUE];
+    [[EAAccessoryManager sharedAccessoryManager] showBluetoothAccessoryPickerWithNameFilter:nil completion:^(NSError *error) {
+        CDVPluginResult* pluginResult = nil;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:[self getList]];
 
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)isEnabled:(CDVInvokedUrlCommand*)command
