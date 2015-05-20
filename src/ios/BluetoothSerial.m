@@ -72,7 +72,7 @@
 
     NSMutableArray *accessoryDictionary = [[NSMutableArray alloc] init];
     for (EAAccessory *device in _accessoryList) {
-        if ([device.protocolStrings indexOfObject:@"com.RovingNetworks.btdemo"] != NSNotFound) {
+        if ([[device protocolStrings] containsObject:@"com.RovingNetworks.btdemo"]) {
             NSMutableDictionary *tmpDic=[[NSMutableDictionary alloc] init];
             [tmpDic setObject:device.name forKey:@"name"];
             [tmpDic setObject:[NSString stringWithFormat:@"%@",  @(device.connectionID)] forKey:@"id"];
@@ -100,10 +100,19 @@
     }
 
     [[EAAccessoryManager sharedAccessoryManager] showBluetoothAccessoryPickerWithNameFilter:nil completion:^(NSError *error) {
-        CDVPluginResult* pluginResult = nil;
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:[self getList]];
+        [self.commandDelegate runInBackground:^{
+            CDVPluginResult* pluginResult = nil;
+            if(error != nil && [error code] == EABluetoothAccessoryPickerResultCancelled) {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:@[]];
+            } else {
+                // connectedAccessories need some time to load protocolStrings properly
+                usleep(3500000);
+                NSMutableArray *accessoryDictionary  = [self getList];
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:accessoryDictionary];
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            }
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
     }];
 }
 
