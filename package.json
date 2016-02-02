@@ -1,0 +1,36 @@
+{
+  "name": "bluetooth-serial-ble",
+  "version": "3.0.2",
+  "description": "Bluetooth Serial Communication Plugin based on plugin from Don Coleman.",
+  "cordova": {
+    "id": "com.improvisio.bluetoothserial",
+    "platforms": [
+      "android",
+      "ios",
+      "browser"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matejkriz/BluetoothSerial.git"
+  },
+  "keywords": [
+    "bluetooth",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "cordova-browser"
+  ],
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=2.9.0"
+    }
+  ],
+  "author": "matejkriz",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/matejkriz/BluetoothSerial/issues"
+  },
+  "homepage": "https://github.com/matejkriz/BluetoothSerial#readme"
+}

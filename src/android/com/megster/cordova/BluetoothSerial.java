@@ -1,18 +1,21 @@
 package com.megster.cordova;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.Settings;
 import android.util.Log;
-// kludgy imports to support 2.9 and 3.0 due to package changes
-import org.apache.cordova.*;
-import org.apache.cordova.api.*;
-// import org.apache.cordova.CordovaArgs;
-// import org.apache.cordova.CordovaPlugin;
-// import org.apache.cordova.CallbackContext;
-// import org.apache.cordova.PluginResult;
-// import org.apache.cordova.LOG;
+import org.apache.cordova.CordovaArgs;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.PluginResult;
+import org.apache.cordova.LOG;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,11 +43,20 @@ public class BluetoothSerial extends CordovaPlugin {
     private static final String IS_ENABLED = "isEnabled";
     private static final String IS_CONNECTED = "isConnected";
     private static final String CLEAR = "clear";
+    private static final String SETTINGS = "showBluetoothSettings";
+    private static final String ENABLE = "enable";
+    private static final String DISCOVER_UNPAIRED = "discoverUnpaired";
+    private static final String SET_DEVICE_DISCOVERED_LISTENER = "setDeviceDiscoveredListener";
+    private static final String CLEAR_DEVICE_DISCOVERED_LISTENER = "clearDeviceDiscoveredListener";
+    private static final String SET_NAME = "setName";
+    private static final String SET_DISCOVERABLE = "setDiscoverable";
 
     // callbacks
     private CallbackContext connectCallback;
     private CallbackContext dataAvailableCallback;
     private CallbackContext rawDataAvailableCallback;
+    private CallbackContext enableBluetoothCallback;
+    private CallbackContext deviceDiscoveredCallback;
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothSerialService bluetoothSerialService;
@@ -67,6 +79,7 @@ public class BluetoothSerial extends CordovaPlugin {
 
     StringBuffer buffer = new StringBuffer();
     private String delimiter;
+    private static final int REQUEST_ENABLE_BLUETOOTH = 1;
 
     @Override
     public boolean execute(String action, CordovaArgs args, CallbackContext callbackContext) throws JSONException {
@@ -96,7 +109,7 @@ public class BluetoothSerial extends CordovaPlugin {
 
             // see Android docs about Insecure RFCOMM http://goo.gl/1mFjZY
             boolean secure = false;
-            connect(args, false, callbackContext);
+            connect(args, secure, callbackContext);
 
         } else if (action.equals(DISCONNECT)) {
 
@@ -135,6 +148,10 @@ public class BluetoothSerial extends CordovaPlugin {
         } else if (action.equals(UNSUBSCRIBE)) {
 
             delimiter = null;
+
+            // send no result, so Cordova won't hold onto the data available callback anymore
+            PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+            dataAvailableCallback.sendPluginResult(result);
             dataAvailableCallback = null;
 
             callbackContext.success();
@@ -174,13 +191,70 @@ public class BluetoothSerial extends CordovaPlugin {
             buffer.setLength(0);
             callbackContext.success();
 
-        } else {
+        } else if (action.equals(SETTINGS)) {
 
+            Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+            cordova.getActivity().startActivity(intent);
+            callbackContext.success();
+
+        } else if (action.equals(ENABLE)) {
+
+            enableBluetoothCallback = callbackContext;
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            cordova.startActivityForResult(this, intent, REQUEST_ENABLE_BLUETOOTH);
+
+        } else if (action.equals(DISCOVER_UNPAIRED)) {
+
+            discoverUnpairedDevices(callbackContext);
+
+        } else if (action.equals(SET_DEVICE_DISCOVERED_LISTENER)) {
+
+            this.deviceDiscoveredCallback = callbackContext;
+
+        } else if (action.equals(CLEAR_DEVICE_DISCOVERED_LISTENER)) {
+
+            this.deviceDiscoveredCallback = null;
+
+        } else if (action.equals(SET_NAME)) {
+
+            String newName = args.getString(0);
+            bluetoothAdapter.setName(newName);
+            callbackContext.success();
+
+        } else if (action.equals(SET_DISCOVERABLE)) {
+
+            int discoverableDuration = args.getInt(0);
+            Intent discoverIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            discoverIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, discoverableDuration);
+            cordova.getActivity().startActivity(discoverIntent);
+
+        } else {
             validAction = false;
 
         }
 
         return validAction;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
+
+            if (resultCode == Activity.RESULT_OK) {
+                Log.d(TAG, "User enabled Bluetooth");
+                if (enableBluetoothCallback != null) {
+                    enableBluetoothCallback.success();
+                }
+            } else {
+                Log.d(TAG, "User did *NOT* enable Bluetooth");
+                if (enableBluetoothCallback != null) {
+                    enableBluetoothCallback.error("User did not enable Bluetooth");
+                }
+            }
+
+            enableBluetoothCallback = null;
+        }
     }
 
     @Override
@@ -196,16 +270,57 @@ public class BluetoothSerial extends CordovaPlugin {
         Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
 
         for (BluetoothDevice device : bondedDevices) {
-            JSONObject json = new JSONObject();
-            json.put("name", device.getName());
-            json.put("address", device.getAddress());
-            json.put("id", device.getAddress());
-            if (device.getBluetoothClass() != null) {
-                json.put("class", device.getBluetoothClass().getDeviceClass());
-            }
-            deviceList.put(json);
+            deviceList.put(deviceToJSON(device));
         }
         callbackContext.success(deviceList);
+    }
+
+    private void discoverUnpairedDevices(final CallbackContext callbackContext) throws JSONException {
+
+        final CallbackContext ddc = deviceDiscoveredCallback;
+
+        final BroadcastReceiver discoverReceiver = new BroadcastReceiver() {
+
+            private JSONArray unpairedDevices = new JSONArray();
+
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    try {
+                    	JSONObject o = deviceToJSON(device);
+                        unpairedDevices.put(o);
+                        if (ddc != null) {
+                            PluginResult res = new PluginResult(PluginResult.Status.OK, o);
+                            res.setKeepCallback(true);
+                            ddc.sendPluginResult(res);
+                        }
+                    } catch (JSONException e) {
+                        // This shouldn't happen, log and ignore
+                        Log.e(TAG, "Problem converting device to JSON", e);
+                    }
+                } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                    callbackContext.success(unpairedDevices);
+                    cordova.getActivity().unregisterReceiver(this);
+                }
+            }
+        };
+
+        Activity activity = cordova.getActivity();
+        activity.registerReceiver(discoverReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+        activity.registerReceiver(discoverReceiver, new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED));
+        bluetoothAdapter.startDiscovery();
+    }
+
+    private JSONObject deviceToJSON(BluetoothDevice device) throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("name", device.getName());
+        json.put("address", device.getAddress());
+        json.put("id", device.getAddress());
+        if (device.getBluetoothClass() != null) {
+            json.put("class", device.getBluetoothClass().getDeviceClass());
+        }
+        return json;
     }
 
     private void connect(CordovaArgs args, boolean secure, CallbackContext callbackContext) throws JSONException {

@@ -3,11 +3,10 @@
     xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.improvisio.bluetoothserial"
-    version="2.1.0">
+    version="3.0.2">
 
     <name>Bluetooth Serial</name>
-    <description>Bluetooth Serial Communication Plugin based on plugin from Don Coleman,
-       but using ExternalAccessory framework on ios for communication with bluetooth classic.</description>
+    <description>Bluetooth Serial Communication Plugin based on plugin from Don Coleman.</description>
     <license>Apache 2.0</license>
     <keywords>bluetooth</keywords>
     <repo>https://github.com/matejkriz/BluetoothSerial</repo>
@@ -33,10 +32,6 @@
         <source-file src="src/android/com/megster/cordova/BluetoothSerialService.java"
             target-dir="src/com/megster/cordova"/>
 
-        <!-- kludge for 2.9 -->
-        <source-file src="src/android/org/apache/cordova/api/Dummy.java"
-            target-dir="src/org/apache/cordova/api"/>
-
         <config-file target="AndroidManifest.xml" parent="/manifest">
             <uses-permission android:name="android.permission.BLUETOOTH" />
             <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -48,24 +43,29 @@
 
         <config-file target="config.xml" parent="/widget">
             <feature name="BluetoothSerial">
-                <param name="ios-package" value="BluetoothSerial" onload="true"/>
+                <param name="ios-package" value="MEGBluetoothSerial" onload="true"/>
             </feature>
         </config-file>
 
-        <!-- Classical bluetooth -->
-        <header-file src="src/ios/BluetoothSerial.h" target-dir="BluetoothSerial" />
-        <source-file src="src/ios/BluetoothSerial.m" target-dir="BluetoothSerial" />
-        <header-file src="src/ios/EADSessionController.h" target-dir="BluetoothSerial" />
-        <source-file src="src/ios/EADSessionController.m" target-dir="BluetoothSerial" />
+        <header-file src="src/ios/MEGBluetoothSerial.h" target-dir="BluetoothSerial" />
+        <source-file src="src/ios/MEGBluetoothSerial.m" target-dir="BluetoothSerial" />
+        <header-file src="src/ios/CBPeripheral+BTSExtensions.h" target-dir="BluetoothSerial" />
+        <source-file src="src/ios/CBPeripheral+BTSExtensions.m" target-dir="BluetoothSerial" />
+
+        <!-- BLEMini see http://redbearlab.com -->
+        <header-file src="src/ios/BLE.h" target-dir="BluetoothSerial" />
+        <header-file src="src/ios/BLEDefines.h" target-dir="BluetoothSerial" />
+        <source-file src="src/ios/BLE.m" target-dir="BluetoothSerial" />
 
         <!-- frameworks -->
-        <framework src="ExternalAccessory.framework" weak="true" />
+        <framework src="CoreBluetooth.framework" />
 
-        <config-file target="*-Info.plist" parent="UISupportedExternalAccessoryProtocols">
-          <array>
-            <string>com.RovingNetworks.btdemo</string>
-          </array>
-        </config-file>
+    </platform>
+
+    <platform name="browser">
+        <js-module src="src/browser/bluetoothSerial.js" name="BluetoothSerial_browser">
+            <clobbers target="window.bluetoothSerial" />
+        </js-module>
 
     </platform>
 </plugin>
